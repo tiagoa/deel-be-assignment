@@ -20,4 +20,10 @@ describe('contracts', () => {
         expect(contractsClient1.body.length).toBe(1);
         expect(contractsContractor6.body.length).toBe(3);
     });
+    test('it should lists unpaid jobs from active contracts belonging to a user', async () => {
+        const unpaidsClient1 = await request(app).get("/jobs/unpaid").set('profile_id', 1);
+        const unpaidsContractor7 = await request(app).get("/jobs/unpaid").set('profile_id', 1);
+        expect(unpaidsClient1.body.length).toBe(1);
+        expect(unpaidsContractor7.body.length).toBe(1);
+    });
 });
