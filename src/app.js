@@ -115,13 +115,59 @@ app.get('/admin/best-profession', async (req, res) => {
         },
         include: {
             model: Contract,
-            include: {model: Profile, as:'Contractor'}
+            include: {
+                model: Profile,
+                as: 'Contractor'
+            }
         },
         group: 'ContractId',
         order: [[sequelize.fn('SUM', sequelize.col('price')), 'DESC']]
     });
 
     res.json(higherPaidJobs.Contract.Contractor.profession);
+});
+
+app.get('/admin/best-clients', async (req, res) => {
+    const {Job, Contract, Profile} = req.app.get('models');
+    let startDate = req.query.start ?? '';
+    let endDate = req.query.end ?? '';
+    const limit = req.query.limit ?? 2;
+    if (startDate === '' && endDate === '') return res.status(400).json({error: 'Provide a start or end date'});
+    const paymentDate = {};
+    if (startDate !== '') paymentDate[Op.gte] = startDate
+    if (endDate !== '') paymentDate[Op.lte] = endDate
+    const higherPaidJobs = await Job.findAll({
+        attributes: {
+            include:[
+            [sequelize.fn('SUM', sequelize.col('price')), 'total']
+        ]},
+        where: {
+            paid: true,
+            paymentDate
+        },
+        include: {
+            model: Contract,
+            include: {
+                model: Profile,
+                as: 'Client'
+            }
+        },
+        group: 'ContractId',
+        order: [[sequelize.fn('SUM', sequelize.col('price')), 'DESC']],
+        limit
+    });
+    console.log(higherPaidJobs)
+    const result = higherPaidJobs.map(job => {
+        // console.log(job.dataValues.total)
+        return {
+            id: job.Contract.Client.id,
+            fullName: job.Contract.Client.firstName + ' ' + job.Contract.Client.lastName,
+            paid: job.dataValues.total
+        }
+    });
+    console.log(result);
+    res.json(result);
+    // res.json(higherPaidJobs.Contract.Contractor.profession);
 });
 
 module.exports = app;

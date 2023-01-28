@@ -34,7 +34,15 @@ describe('contracts', () => {
         expect(higherPaidProfessionDay16.body).toBe('Fighter')
         const higherPaidProfessionUntilDay15 = await request(app).get("/admin/best-profession?end=2020-08-15");
         expect(higherPaidProfessionUntilDay15.body).toBe('Programmer')
-        // console.log(higherPaidProfession.body)
+    });
+    test('it should show the list of best clients', async () => {
+        const bestClientsWithoutDate = await request(app).get("/admin/best-clients");
+        expect(bestClientsWithoutDate).toHaveProperty('status', 400);
+        expect(bestClientsWithoutDate.body).toHaveProperty('error', 'Provide a start or end date');
+        const bestClientsDay16 = await request(app).get("/admin/best-clients?start=2020-08-16");
+        expect(bestClientsDay16.body).toMatchObject([{id: 3, fullName: 'John Snow', paid: 200}, {id: 2, fullName: 'Mr Robot', paid: 200}])
+        const bestClientsUntilDay15 = await request(app).get("/admin/best-clients?end=2020-08-15");
+        expect(bestClientsUntilDay15.body).toMatchObject([{id: 2, fullName: 'Mr Robot', paid: 121}, {id: 1, fullName: 'Harry Potter', paid: 21}])
     });
 });
 describe('changes db', () => {
