@@ -67,8 +67,29 @@ app.get('/jobs/unpaid', getProfile, async (req, res) => {
             }]
         }]
     });
-    console.log(unpaids)
     res.json(unpaids);
 })
+
+app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
+    const {Job, Profile} = req.app.get('models');
+    const jobToPay = await Job.findOne({
+        where: {
+            id: req.params.job_id,
+            paid: null
+        },
+        include: 'Contract'
+    });
+    // console.log(jobToPay);
+    if (!jobToPay) return res.status(404).end()
+    if (req.profile.balance < jobToPay.price) return res.status(400).json({error: "Insufficient funds"}).end()
+    const constractor = await Profile.findOne({where: {id: jobToPay.Contract.ContractorId}})
+    req.profile.balance -= jobToPay.price;
+    await req.profile.save();
+    constractor.balance += jobToPay.price;
+    await constractor.save();
+    jobToPay.paid = true;
+    await jobToPay.save();
+    res.json(jobToPay);
+});
 
 module.exports = app;

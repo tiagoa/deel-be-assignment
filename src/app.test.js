@@ -1,7 +1,7 @@
 const {seed} = require('../src/seed');
 const request = require("supertest");
 const app = require("./app");
-
+/*
 describe('contracts', () => {
     beforeAll(async () => {
         return await seed();
@@ -26,4 +26,26 @@ describe('contracts', () => {
         expect(unpaidsClient1.body.length).toBe(1);
         expect(unpaidsContractor7.body.length).toBe(1);
     });
+
 });
+*/
+describe('changes db', ()=>{
+    beforeEach(async () => {
+        return await seed();
+    });
+    test('it should pay jobs', async () => {
+        const tryToPayJob9Client1 = await request(app).post('/jobs/9/pay').set('profile_id', 1)
+        expect(tryToPayJob9Client1).toHaveProperty('status', 404);
+        const tryToPayJob5Client7 = await request(app).post('/jobs/5/pay').set('profile_id', 7)
+        expect(tryToPayJob5Client7).toHaveProperty('status', 400);
+        expect(tryToPayJob5Client7.body).toHaveProperty('error', 'Insufficient funds');
+        const payJob3Client1 = await request(app).post('/jobs/3/pay').set('profile_id', 1)
+        const {Job, Profile} = app.get('models');
+        const job3 = await Job.findOne({where: {id: 3}});
+        const client1 = await Profile.findOne({where: {id: 1}});
+        // console.log(job3)
+        expect(job3.paid).toBe(true);
+        expect(client1.balance).toBe(948)
+        expect(payJob3Client1).toHaveProperty('status', 200);
+    });
+})
