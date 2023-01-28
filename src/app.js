@@ -71,6 +71,7 @@ app.get('/jobs/unpaid', getProfile, async (req, res) => {
 })
 
 app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
+    if (req.profile.type !== 'client') return res.status(403).json({error: "You need to be a client to pay for a job"})
     const {Job, Profile} = req.app.get('models');
     const jobToPay = await Job.findOne({
         where: {
@@ -82,14 +83,22 @@ app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
     // console.log(jobToPay);
     if (!jobToPay) return res.status(404).end()
     if (req.profile.balance < jobToPay.price) return res.status(400).json({error: "Insufficient funds"}).end()
-    const constractor = await Profile.findOne({where: {id: jobToPay.Contract.ContractorId}})
-    req.profile.balance -= jobToPay.price;
-    await req.profile.save();
-    constractor.balance += jobToPay.price;
-    await constractor.save();
-    jobToPay.paid = true;
-    await jobToPay.save();
-    res.json(jobToPay);
+    try {
+        await sequelize.transaction(async () => {
+            const constractor = await Profile.findOne({where: {id: jobToPay.Contract.ContractorId}})
+            req.profile.balance -= jobToPay.price;
+            await req.profile.save();
+            constractor.balance += jobToPay.price;
+            await constractor.save();
+            jobToPay.paid = true;
+            await jobToPay.save();
+            return res.json(jobToPay);
+        });
+    } catch (error) {
+        return res.status(400).json({error: "An error occurred"})
+    }
 });
+
+
 
 module.exports = app;

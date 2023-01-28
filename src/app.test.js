@@ -29,21 +29,23 @@ describe('contracts', () => {
 
 });
 */
-describe('changes db', ()=>{
+describe('changes db', () => {
     beforeEach(async () => {
         return await seed();
     });
     test('it should pay jobs', async () => {
         const tryToPayJob9Client1 = await request(app).post('/jobs/9/pay').set('profile_id', 1)
         expect(tryToPayJob9Client1).toHaveProperty('status', 404);
-        const tryToPayJob5Client7 = await request(app).post('/jobs/5/pay').set('profile_id', 7)
-        expect(tryToPayJob5Client7).toHaveProperty('status', 400);
-        expect(tryToPayJob5Client7.body).toHaveProperty('error', 'Insufficient funds');
+        const tryToPayJob5Contractor5 = await request(app).post('/jobs/5/pay').set('profile_id', 5)
+        expect(tryToPayJob5Contractor5).toHaveProperty('status', 403)
+        expect(tryToPayJob5Contractor5.body).toHaveProperty('error', 'You need to be a client to pay for a job')
+        const tryToPayJob5Client4 = await request(app).post('/jobs/5/pay').set('profile_id', 4)
+        expect(tryToPayJob5Client4).toHaveProperty('status', 400);
+        expect(tryToPayJob5Client4.body).toHaveProperty('error', 'Insufficient funds');
         const payJob3Client1 = await request(app).post('/jobs/3/pay').set('profile_id', 1)
         const {Job, Profile} = app.get('models');
         const job3 = await Job.findOne({where: {id: 3}});
         const client1 = await Profile.findOne({where: {id: 1}});
-        // console.log(job3)
         expect(job3.paid).toBe(true);
         expect(client1.balance).toBe(948)
         expect(payJob3Client1).toHaveProperty('status', 200);
