@@ -1,7 +1,7 @@
 const {seed} = require('../src/seed');
 const request = require("supertest");
 const app = require("./app");
-/*
+
 describe('contracts', () => {
     beforeAll(async () => {
         return await seed();
@@ -26,9 +26,17 @@ describe('contracts', () => {
         expect(unpaidsClient1.body.length).toBe(1);
         expect(unpaidsContractor7.body.length).toBe(1);
     });
-
+    test('it should show the higher paid profession', async () => {
+        const higherPaidProfessionWithoutDate = await request(app).get("/admin/best-profession");
+        expect(higherPaidProfessionWithoutDate).toHaveProperty('status', 400);
+        expect(higherPaidProfessionWithoutDate.body).toHaveProperty('error', 'Provide a start or end date');
+        const higherPaidProfessionDay16 = await request(app).get("/admin/best-profession?start=2020-08-16");
+        expect(higherPaidProfessionDay16.body).toBe('Fighter')
+        const higherPaidProfessionUntilDay15 = await request(app).get("/admin/best-profession?end=2020-08-15");
+        expect(higherPaidProfessionUntilDay15.body).toBe('Programmer')
+        // console.log(higherPaidProfession.body)
+    });
 });
-*/
 describe('changes db', () => {
     beforeEach(async () => {
         return await seed();

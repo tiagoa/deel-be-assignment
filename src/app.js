@@ -3,6 +3,7 @@ const bodyParser = require('body-parser');
 const {Op} = require('sequelize');
 const {sequelize, Profile, Contract} = require('./model')
 const {getProfile} = require('./middleware/getProfile')
+const moment = require("moment");
 const app = express()
 app.use(bodyParser.json())
 app.set('sequelize', sequelize)
@@ -80,7 +81,6 @@ app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
         },
         include: 'Contract'
     });
-    // console.log(jobToPay);
     if (!jobToPay) return res.status(404).end()
     if (req.profile.balance < jobToPay.price) return res.status(400).json({error: "Insufficient funds"}).end()
     try {
@@ -91,6 +91,7 @@ app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
             constractor.balance += jobToPay.price;
             await constractor.save();
             jobToPay.paid = true;
+            jobToPay.paymentDate = moment()
             await jobToPay.save();
             return res.json(jobToPay);
         });
@@ -99,6 +100,28 @@ app.post('/jobs/:job_id/pay', getProfile, async (req, res) => {
     }
 });
 
+app.get('/admin/best-profession', async (req, res) => {
+    const {Job, Contract, Profile} = req.app.get('models');
+    let startDate = req.query.start ?? '';
+    let endDate = req.query.end ?? '';
+    if (startDate === '' && endDate === '') return res.status(400).json({error: 'Provide a start or end date'});
+    const paymentDate = {};
+    if (startDate !== '') paymentDate[Op.gte] = startDate
+    if (endDate !== '') paymentDate[Op.lte] = endDate
+    const higherPaidJobs = await Job.findOne({
+        where: {
+            paid: true,
+            paymentDate
+        },
+        include: {
+            model: Contract,
+            include: {model: Profile, as:'Contractor'}
+        },
+        group: 'ContractId',
+        order: [[sequelize.fn('SUM', sequelize.col('price')), 'DESC']]
+    });
 
+    res.json(higherPaidJobs.Contract.Contractor.profession);
+});
 
 module.exports = app;
