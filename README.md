@@ -96,3 +96,13 @@ It would be great for example if you'd write some unit test / simple frontend de
 When you have finished the assignment, zip your repo (make sure to include .git folder) and send us the zip.
 
 Thank you and good luck! 🙏
+
+## Assignment solution
+
+I wrote tests because to me is the faster way to see the API development result rather than making requests from an external client or consuming it from a frontend. And the tests give me more security to make changes in the code.
+
+For development speed, I choose to use the same seed data to write the tests, so I separated the seed script to use in tests.
+
+The tests are separated into two blocks: the first doesn't change the data and the second does.
+
+To run the tests use the following command: `npm test`
